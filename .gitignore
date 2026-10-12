@@ -1,0 +1,23 @@
+
+# Secrets and environment variables
+.env
+.env.*
+!.env.example
+
+# Python virtual environments
+venv/
+.venv/
+**/venv/
+**/.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Node dependencies and builds
+node_modules/
+dist/
+
+# Local configuration and logs
+*.log
+.DS_Store
