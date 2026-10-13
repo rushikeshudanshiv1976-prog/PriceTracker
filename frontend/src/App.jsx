@@ -39,7 +39,32 @@ const RETAILERS = [
 const PLACEHOLDER_IMAGE =
   "https://placehold.co/600x400/171725/c4ff4d?text=Product";
 
+
+
 function money(value, currency = "INR") {
+  const amount = Number(value);
+
+  if (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    !Number.isFinite(amount)
+  ) {
+    return "Price unavailable";
+  }
+
+  try {
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `₹${amount.toLocaleString("en-IN")}`;
+  }
+}
+
+function productMoney(value, currency = "INR") {
   const amount = Number(value);
 
   if (
@@ -52,16 +77,10 @@ function money(value, currency = "INR") {
     return "Price unavailable";
   }
 
-  try {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  } catch {
-    return `₹${amount.toLocaleString("en-IN")}`;
-  }
+  return money(amount, currency);
 }
+
+
 
 function getErrorMessage(error) {
   const detail = error?.response?.data?.detail;
@@ -1260,15 +1279,49 @@ function WatchlistPage({ items, loading, onRemove, onNavigate, token }) {
       setHistoryLoading(false);
     }
   };
-  const saveTarget = async (item) => {
-    const raw = targetValues[item.subscription_id];
-    try {
-      await axios.patch(`${API}/api/products/watchlist/${item.subscription_id}/target`,
-        { target_price: raw ? Number(raw) : null },
-        { headers: { Authorization: `Bearer ${token}` } });
-      window.alert("Target price saved. Email alerts require SMTP configuration in the backend environment.");
-    } catch { window.alert("Could not save target price."); }
-  };
+
+const saveTarget = async (item) => {
+  const raw = targetValues[item.subscription_id];
+
+  // An empty input clears the target price.
+  const targetPrice =
+    raw === undefined
+      ? item.target_price
+      : raw.trim() === ""
+        ? null
+        : Number(raw);
+
+  if (
+    targetPrice !== null &&
+    (!Number.isFinite(targetPrice) || targetPrice <= 0)
+  ) {
+    window.alert("Please enter a valid target price greater than ₹0.");
+    return;
+  }
+
+  try {
+    const response = await axios.patch(
+      `${API}/api/products/watchlist/${item.subscription_id}/target`,
+      { target_price: targetPrice },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    // Keep the input and displayed target in sync.
+    setTargetValues((old) => ({
+      ...old,
+      [item.subscription_id]:
+        targetPrice === null ? "" : String(targetPrice),
+    }));
+
+    window.alert(response.data.message || "Target price updated successfully.");
+  } catch (error) {
+    const message =
+      error.response?.data?.detail || "Could not save target price.";
+
+    window.alert(message);
+  }
+};
+
   return (
     <div className="page-stack">
       <section className="page-intro">
@@ -1332,12 +1385,12 @@ function WatchlistPage({ items, loading, onRemove, onNavigate, token }) {
 
               <div className="watchlist-price">
                 <small>CURRENT LISTED PRICE</small>
-                <strong>{money(item.current_price)}</strong>
+                <strong>{productMoney(item.current_price)}</strong>
                 <small>
                   Target:{" "}
-                  {item.target_price == null
-                    ? "Not set"
-                    : money(item.target_price)}
+                 {item.target_price == null
+                  ? "Not set"
+                   : productMoney(item.target_price)}
                 </small>
               </div>
 
@@ -1367,8 +1420,27 @@ function WatchlistPage({ items, loading, onRemove, onNavigate, token }) {
                   <div className="history-card-heading"><h4>Price history · {item.title}</h4><button type="button" className="btn-icon" onClick={() => setHistoryFor(null)}>×</button></div>
                   {historyLoading ? <p>Loading history…</p> : historyData?.error ? <p>{historyData.error}</p> : historyData ? (
                     <>
-                      <div className="history-stats"><span>Average drop <strong>{money(historyData.average_drop)}</strong></span><span>Average rise <strong>{money(historyData.average_rise)}</strong></span><span>Net change <strong>{money(historyData.net_change)}</strong></span></div>
-                      {historyData.history?.length > 1 ? <PriceHistoryGraph history={historyData.history} /> : <p>Not enough recorded price points yet. As new checks are saved, the graph will appear here.</p>}
+                      
+<div className="history-stats">
+  <span>
+    Average drop
+    <strong>{money(historyData.average_drop ?? 0)}</strong>
+  </span>
+
+  <span>
+    Average rise
+    <strong>{money(historyData.average_rise ?? 0)}</strong>
+  </span>
+
+  <span>
+    Net change
+    <strong>{money(historyData.net_change ?? 0)}</strong>
+  </span>
+</div>
+
+
+
+                      <PriceHistoryGraph history={historyData.history || []} />
                     </>
                   ) : null}
                 </div>
@@ -1382,14 +1454,245 @@ function WatchlistPage({ items, loading, onRemove, onNavigate, token }) {
 }
 
 
-function PriceHistoryGraph({ history }) {
-  const values = history.map((point) => Number(point.price)).filter(Number.isFinite);
-  if (values.length < 2) return <p>Not enough price history yet.</p>;
-  const min = Math.min(...values), max = Math.max(...values);
-  const span = max - min || 1;
-  const points = values.map((value, index) => `${index / (values.length - 1) * 560},${110 - ((value - min) / span) * 90}`).join(" ");
-  return <div className="price-history-chart"><svg viewBox="0 0 560 125" role="img" aria-label="Recorded product price history"><polyline points={points} fill="none" stroke="currentColor" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />{values.map((value, index) => <circle key={index} cx={index / (values.length - 1) * 560} cy={110 - ((value - min) / span) * 90} r="3.5" fill="currentColor" />)}</svg><div className="chart-range"><span>Low: {money(min)}</span><span>High: {money(max)}</span></div></div>;
+
+
+function PriceHistoryGraph({ history = [] }) {
+  const points = history
+    .map((point) => ({
+      price: Number(point.price),
+      date: point.recorded_at
+        ? new Date(point.recorded_at)
+        : null,
+    }))
+    .filter(
+      (point) =>
+        Number.isFinite(point.price) &&
+        point.price > 0 &&
+        point.date &&
+        !Number.isNaN(point.date.getTime())
+    )
+    .sort((a, b) => a.date - b.date);
+
+  if (points.length === 0) {
+    return (
+      <div className="price-history-empty">
+        No recorded prices yet. The graph will appear when a valid
+        price observation is saved.
+      </div>
+    );
+  }
+
+  const width = 600;
+  const height = 230;
+
+  const padding = {
+    top: 28,
+    right: 24,
+    bottom: 48,
+    left: 24,
+  };
+
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+
+  const prices = points.map((point) => point.price);
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const range = maxPrice - minPrice;
+
+  const displayMin =
+    range === 0
+      ? Math.max(0, minPrice * 0.95)
+      : Math.max(0, minPrice - range * 0.12);
+
+  const displayMax =
+    range === 0
+      ? maxPrice * 1.05
+      : maxPrice + range * 0.12;
+
+  const displayRange = displayMax - displayMin || 1;
+
+  const coordinates = points.map((point, index) => {
+    const x =
+      points.length === 1
+        ? width / 2
+        : padding.left +
+          (index / (points.length - 1)) * chartWidth;
+
+    const y =
+      padding.top +
+      ((displayMax - point.price) / displayRange) *
+        chartHeight;
+
+    return { ...point, x, y };
+  });
+
+  const linePoints = coordinates
+    .map((point) => `${point.x},${point.y}`)
+    .join(" ");
+
+  const formatDate = (date) =>
+    date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "2-digit",
+    });
+
+  const first = points[0];
+  const latest = points[points.length - 1];
+
+  const change = Number(
+    (latest.price - first.price).toFixed(2)
+  );
+
+  const changePercent =
+    first.price > 0
+      ? Number(((change / first.price) * 100).toFixed(2))
+      : 0;
+
+  return (
+    <div className="price-history-chart">
+      <div className="history-chart-summary">
+        <div>
+          <span className="history-chart-label">
+            LATEST RECORDED PRICE
+          </span>
+          <strong>{money(latest.price)}</strong>
+          <small>{formatDate(latest.date)}</small>
+        </div>
+
+        {points.length > 1 && (
+          <div className="history-chart-change">
+            <span className="history-chart-label">
+              CHANGE SINCE FIRST RECORD
+            </span>
+
+            <strong
+              className={
+                change < 0
+                  ? "price-down"
+                  : change > 0
+                    ? "price-up"
+                    : ""
+              }
+            >
+              {change > 0 ? "+" : ""}
+              {money(change)}
+            </strong>
+
+            <small>
+              {change > 0 ? "+" : ""}
+              {changePercent.toFixed(2)}%
+            </small>
+          </div>
+        )}
+      </div>
+
+      <div className="history-chart-svg-wrap">
+        <svg
+          viewBox={`0 0 ${width} ${height}`}
+          role="img"
+          aria-label={`Price history with ${points.length} recorded observations`}
+        >
+          {[0, 0.5, 1].map((fraction) => {
+            const y =
+              padding.top + fraction * chartHeight;
+
+            const price =
+              displayMax - fraction * displayRange;
+
+            return (
+              <g key={fraction}>
+                <line
+                  x1={padding.left}
+                  y1={y}
+                  x2={width - padding.right}
+                  y2={y}
+                  className="history-grid-line"
+                />
+
+                <text
+                  x={padding.left}
+                  y={y - 6}
+                  className="history-axis-label"
+                >
+                  {money(price)}
+                </text>
+              </g>
+            );
+          })}
+
+          {coordinates.length > 1 && (
+            <polyline
+              points={linePoints}
+              fill="none"
+              className="history-line"
+              strokeWidth="3"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          )}
+
+          {coordinates.map((point, index) => (
+            <g key={`${point.date.toISOString()}-${index}`}>
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r="5"
+                className="history-point"
+              >
+                <title>
+                  {formatDate(point.date)} — {money(point.price)}
+                </title>
+              </circle>
+
+              {(index === 0 ||
+                index === coordinates.length - 1 ||
+                coordinates.length <= 5) && (
+                <text
+                  x={point.x}
+                  y={height - 16}
+                  textAnchor={
+                    index === 0
+                      ? "start"
+                      : index === coordinates.length - 1
+                        ? "end"
+                        : "middle"
+                  }
+                  className="history-axis-label"
+                >
+                  {formatDate(point.date)}
+                </text>
+              )}
+            </g>
+          ))}
+        </svg>
+      </div>
+
+      <div className="chart-range">
+        <span>Lowest: {money(minPrice)}</span>
+        <span>Highest: {money(maxPrice)}</span>
+        <span>{points.length} recorded points</span>
+      </div>
+
+      {points.length === 1 && (
+        <p className="history-chart-note">
+          One price has been recorded so far. Price movement will
+          appear after another valid observation is saved.
+        </p>
+      )}
+
+      {points.length > 1 && range === 0 && (
+        <p className="history-chart-note">
+          All recorded prices are currently the same. The line is
+          flat because no price change has been recorded yet.
+        </p>
+      )}
+    </div>
+  );
 }
+
+
 
 function ProfilePage({
   user,

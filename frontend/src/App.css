@@ -2519,3 +2519,282 @@ button:disabled {
     justify-self: start;
   }
 }
+
+
+
+.price-history-chart {
+  width: 100%;
+  min-width: 0;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border-color, rgba(128, 128, 128, 0.25));
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.history-chart-summary {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.history-chart-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.history-chart-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.history-chart-summary strong {
+  font-size: 22px;
+}
+
+.history-chart-summary small {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.price-down {
+  color: #35b779;
+}
+
+.price-up {
+  color: #e59b48;
+}
+
+.history-chart-svg-wrap {
+  width: 100%;
+  overflow: hidden;
+}
+
+.history-chart-svg-wrap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.history-grid-line {
+  stroke: currentColor;
+  stroke-opacity: 0.12;
+  stroke-dasharray: 4 4;
+}
+
+.history-axis-label {
+  fill: currentColor;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.history-line {
+  stroke: #b8ee4b;
+}
+
+.history-point {
+  fill: #b8ee4b;
+  stroke: var(--card-background, #171725);
+  stroke-width: 2;
+}
+
+.price-history-empty,
+.history-chart-note {
+  padding: 12px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  opacity: 0.75;
+}
+
+.chart-range {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+@media (max-width: 520px) {
+  .price-history-chart {
+    padding: 10px;
+  }
+
+  .history-chart-summary strong {
+    font-size: 18px;
+  }
+
+  .history-axis-label {
+    font-size: 10px;
+  }
+}
+
+
+.price-history-chart {
+  width: 100%;
+  min-width: 0;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border-color, rgba(128, 128, 128, 0.25));
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.history-chart-summary {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.history-chart-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.history-chart-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  opacity: 0.7;
+}
+
+.history-chart-summary strong {
+  font-size: 22px;
+}
+
+.history-chart-summary small {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.price-down {
+  color: #35b779;
+}
+
+.price-up {
+  color: #e59b48;
+}
+
+.history-chart-svg-wrap {
+  width: 100%;
+  overflow: hidden;
+}
+
+.history-chart-svg-wrap svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.history-grid-line {
+  stroke: currentColor;
+  stroke-opacity: 0.12;
+  stroke-dasharray: 4 4;
+}
+
+.history-axis-label {
+  fill: currentColor;
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.history-line {
+  stroke: #b8ee4b;
+}
+
+.history-point {
+  fill: #b8ee4b;
+  stroke: var(--card-background, #171725);
+  stroke-width: 2;
+}
+
+.price-history-empty,
+.history-chart-note {
+  padding: 12px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  opacity: 0.75;
+}
+
+.chart-range {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+@media (max-width: 520px) {
+  .price-history-chart {
+    padding: 10px;
+  }
+
+  .history-chart-summary strong {
+    font-size: 18px;
+  }
+
+  .history-axis-label {
+    font-size: 10px;
+  }
+}
+
+
+/* Fix price comparison offer rows in light mode */
+html[data-theme="light"] .offer-list-heading {
+  color: #77758a;
+}
+
+html[data-theme="light"] .offer-row {
+  background: #f7f7fc;
+  color: #242235;
+  border: 1px solid #e6e3f2;
+}
+
+html[data-theme="light"] .offer-row .offer-retailer-name,
+html[data-theme="light"] .offer-row .offer-price {
+  color: #242235;
+}
+
+html[data-theme="light"] .offer-row .offer-link {
+  color: #6841e8;
+}
+
+html[data-theme="light"] .offer-row .offer-link-unavailable {
+  color: #77758a;
+}
+
+html[data-theme="light"] .offer-row.offer-row-cheapest {
+  background: #f0ebff;
+  border-color: #d9ccff;
+}
+
+html[data-theme="light"] .offer-row .offer-best-badge {
+  background: #ded2ff;
+  color: #4f2acb;
+}
+
+html[data-theme="light"] .comparison-lowest {
+  background: #fbfff5;
+  color: #242235;
+}
+
+html[data-theme="light"] .comparison-label {
+  color: #626071;
+}
+
+html[data-theme="light"] .comparison-winner,
+html[data-theme="light"] .comparison-savings,
+html[data-theme="light"] .verification-note {
+  color: #69677c;
+}
